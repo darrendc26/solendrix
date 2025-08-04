@@ -12,5 +12,6 @@ pub struct Ico {
     pub price_lamports: u64,  
     pub is_active: bool,
     pub bump: u8,           
+    pub total_raised: u64,
     // Optionally: pub merkle_root: [u8; 32], // For Light Protocol integration
 }

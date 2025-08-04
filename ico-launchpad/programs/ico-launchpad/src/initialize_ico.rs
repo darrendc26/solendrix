@@ -42,6 +42,7 @@ pub fn initialize_ico_handler(
     ico.end_time = end_time;
     ico.total_tokens = total_tokens;
     ico.price_lamports = price_lamports;
+    ico.total_raised = 0;
     ico.is_active = true;
     ico.bump = ctx.bumps.ico;
 

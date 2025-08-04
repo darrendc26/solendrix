@@ -1,4 +1,4 @@
-
+#![allow(unused)]
 use anchor_lang::prelude::*;
 use light_sdk::{
     account::LightAccount,
@@ -11,8 +11,10 @@ use light_sdk::{
 
 mod error;
 mod ico;
-pub use ico::*;
 mod initialize_ico;
+mod invest;
+pub use invest::*;
+pub use ico::*;
 pub use initialize_ico::*;
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
