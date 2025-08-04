@@ -25,7 +25,7 @@ pub mod ico_launchpad {
 
     use super::*;
 
-    pub fn initialize_ico(ctx: Context<InitializeIco>) -> Result<()> {
+    pub fn initialize_ico(ctx: Context<InitializeIco>, token_mint: Pubkey, token_account: Pubkey, start_time: i64, end_time: i64, total_tokens: u64, price_lamports: u64) -> Result<()> {
         initialize_ico::initialize_ico_handler(ctx, token_mint, token_account, start_time, end_time, total_tokens, price_lamports)    
     }
 }
