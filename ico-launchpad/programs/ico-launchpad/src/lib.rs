@@ -13,9 +13,14 @@ mod error;
 mod ico;
 mod initialize_ico;
 mod invest;
-pub use invest::*;
+mod claim;
+
+// Public exports
+pub use error::*;
 pub use ico::*;
 pub use initialize_ico::*;
+pub use invest::*;
+pub use claim::*;
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
@@ -24,27 +29,56 @@ pub const LIGHT_CPI_SIGNER: CpiSigner =
 
 #[program]
 pub mod ico_launchpad {
-
     use super::*;
 
-    pub fn initialize_ico(ctx: Context<InitializeIco>, token_mint: Pubkey, token_account: Pubkey, start_time: i64, end_time: i64, total_tokens: u64, price_lamports: u64) -> Result<()> {
-        initialize_ico::initialize_ico_handler(ctx, token_mint, token_account, start_time, end_time, total_tokens, price_lamports)    
+    /// Initialize a new ICO with the given parameters
+    pub fn initialize_ico(
+        ctx: Context<InitializeIco>, 
+        token_mint: Pubkey, 
+        token_account: Pubkey, 
+        start_time: i64, 
+        end_time: i64, 
+        total_tokens: u64, 
+        price_lamports: u64
+    ) -> Result<()> {
+        initialize_ico::initialize_ico_handler(
+            ctx, 
+            token_mint, 
+            token_account, 
+            start_time, 
+            end_time, 
+            total_tokens, 
+            price_lamports
+        )    
+    }
+
+    /// Create a shielded investment in an ICO using Light Protocol
+    pub fn create_investment<'info>(
+        ctx: Context<'_, '_, '_, 'info, Invest<'info>>,
+        proof: ValidityProof, 
+        address_tree_info: PackedAddressTreeInfo, 
+        output_merkle_tree_index: u8, 
+        amount: u64
+    ) -> Result<()> { 
+        invest::invest_handler(ctx, proof, address_tree_info, output_merkle_tree_index, amount)
     }
 }
 
-// Declare compressed account as event so that it is included in the anchor idl.
-#[event]
-#[derive(
-    Clone, Debug, Default, LightDiscriminator, LightHasher,
-)]
-pub struct CounterCompressedAccount {
-    #[hash]
-    pub owner: Pubkey,
-    pub counter: u64,
+// Account structs for additional functions
+#[derive(Accounts)]
+pub struct UpdateIcoStatus<'info> {
+    #[account(mut, has_one = owner)]
+    pub ico: Account<'info, Ico>,
+    pub owner: Signer<'info>,
 }
 
+
+// Generic accounts struct for Light Protocol operations
 #[derive(Accounts)]
-pub struct GenericAnchorAccounts<'info> {
+pub struct GenericLightAccounts<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
+    /// CHECK: Light Protocol program
+    pub light_protocol_program: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
 }

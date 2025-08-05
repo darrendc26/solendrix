@@ -20,7 +20,7 @@ pub struct Invest<'info> {
     pub ico: Account<'info, Ico>,
     
     #[account(mut)]
-    pub owner: Signer<'info>,
+    pub owner: AccountInfo<'info>,
     
     #[account(mut)]
     pub investor: Signer<'info>,
@@ -70,7 +70,7 @@ pub fn invest_handler<'info>(
         &[
             b"allocation", 
             ctx.accounts.investor.key().as_ref(),
-            ico.key().as_ref(), // Fixed: use as_ref() instead of to_bytes()
+            ico.key().as_ref(), 
             &amount.to_le_bytes()
         ],
         &address_tree_info
