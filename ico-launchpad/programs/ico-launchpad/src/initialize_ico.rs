@@ -48,7 +48,7 @@ pub fn initialize_ico_handler(
     price_lamports: u64,
 ) -> Result<()> {
     let now = Clock::get()?.unix_timestamp;
-    require!( start_time > now, ErrorCode::StartTimeTooSoon );
+    require!( start_time >= now, ErrorCode::StartTimeTooSoon );
     require!( end_time > start_time, ErrorCode::EndTimeTooSoon );
     require!( end_time > now, ErrorCode::EndTimeTooSoon );
     require!( total_tokens > 0, ErrorCode::TotalTokensTooLow );
