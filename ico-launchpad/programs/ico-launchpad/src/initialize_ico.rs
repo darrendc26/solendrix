@@ -1,7 +1,8 @@
 use anchor_lang::prelude::*;
-
+use anchor_spl::token::{TokenAccount, Mint, Token, Transfer, transfer};
 use crate::ico::*;
 use crate::error::ErrorCode;
+use anchor_spl::associated_token::AssociatedToken;
 
 #[derive(Accounts)]
 pub struct InitializeIco<'info> {
@@ -15,6 +16,25 @@ pub struct InitializeIco<'info> {
         bump,
     )]
     pub ico: Account<'info, Ico>,
+    #[account(
+        init,
+        payer = owner,
+        token::mint = token_mint,
+        token::authority = ico,
+        seeds = [b"vault", ico.key().as_ref()],
+        bump,
+    )]
+    pub ico_vault: Account<'info, TokenAccount>,
+    pub token_mint: Account<'info, Mint>,
+    #[account(
+        init_if_needed,
+        payer = owner,
+        associated_token::mint = token_mint,
+        associated_token::authority = owner,
+    )]
+    pub owner_ata: Account<'info, TokenAccount>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
@@ -41,10 +61,21 @@ pub fn initialize_ico_handler(
     ico.start_time = start_time;
     ico.end_time = end_time;
     ico.total_tokens = total_tokens;
+    ico.total_invested = 0;
     ico.price_lamports = price_lamports;
     ico.total_raised = 0;
     ico.is_active = true;
     ico.bump = ctx.bumps.ico;
+
+    // Transfer ownership of the token account to the ICO
+    let cpi_accounts = Transfer {
+        from: ctx.accounts.owner_ata.to_account_info(),
+        to: ctx.accounts.ico_vault.to_account_info(),
+        authority: ctx.accounts.owner.to_account_info(),
+    };
+    let cpi_program = ctx.accounts.token_program.to_account_info();
+    let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+    transfer(cpi_ctx, total_tokens)?;
 
     Ok(())
 }

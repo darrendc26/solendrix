@@ -9,6 +9,7 @@ pub struct Ico {
     pub start_time: i64,
     pub end_time: i64,
     pub total_tokens: u64,
+    pub total_invested: u64,
     pub price_lamports: u64,  
     pub is_active: bool,
     pub bump: u8,           

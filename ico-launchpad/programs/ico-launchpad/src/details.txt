@@ -1,0 +1,12 @@
+Creating token HfvhzW2zoqKvjuE6t4xjevgevzyXnuchg3LSQxadNVpm under program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA
+
+Address:  HfvhzW2zoqKvjuE6t4xjevgevzyXnuchg3LSQxadNVpm
+Decimals:  9
+
+Signature: 3i24DPKZZYYfKzq7miEyZB44EabXqdUGEUgxU1ogTdhaCyVQbkm7fSZdizGt6igwj98gtJrEH4CmBWCbeayC5gVZ
+
+Token account
+
+Creating account 3c8JVcruyTWWLm3xACsxJNCdiSkTiGvkNR5WNcvLLj3Q
+
+Signature: 49qrUmb6SffZuDjCaQe8Fa39t2GuVjUF2pvWRkEDV9VfJSySDCJzc51pX469HyCLP6FW8JTayotn6NHjLTLMXMBj

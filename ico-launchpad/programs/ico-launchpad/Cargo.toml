@@ -15,13 +15,14 @@ no-log-ix-name = []
 cpi = ["no-entrypoint"]
 default = ["idl-build"]
 test-sbf = []
-idl-build = ["anchor-lang/idl-build", "light-sdk/idl-build"]
+idl-build = ["anchor-lang/idl-build", "light-sdk/idl-build", "anchor-spl/idl-build"]
 
 [dependencies]
-anchor-lang = "0.31.1"
+anchor-lang = { version = "0.31.1", features = ["init-if-needed"] }
 light-sdk = { version = "0.13.0", features = ["anchor"] }
 light-hasher = { version = "3.1.0", features = ["solana"] }
 light-sdk-types = { version = "0.13.0" }
+anchor-spl = {version = "0.31.1", features = ["token"]}
 
 [target.'cfg(not(target_os = "solana"))'.dependencies]
 solana-sdk = "2.2"

@@ -1,12 +1,15 @@
-#![allow(unused)]
 use anchor_lang::prelude::*;
 use light_sdk::{
-    account::LightAccount,
-    address::v1::derive_address,
-    cpi::{CpiAccounts, CpiInputs, CpiSigner},
+    // account::LightAccount,
+    // address::v1::derive_address,
+    cpi::{
+        // CpiAccounts, CpiInputs, 
+        CpiSigner},
     derive_light_cpi_signer,
-    instruction::{account_meta::CompressedAccountMeta, PackedAddressTreeInfo, ValidityProof},
-    LightDiscriminator, LightHasher,
+    instruction::{
+        // account_meta::CompressedAccountMeta, 
+        PackedAddressTreeInfo, ValidityProof},
+    // LightDiscriminator, LightHasher,
 };
 
 mod error;
@@ -16,10 +19,9 @@ mod invest;
 mod claim;
 
 // Public exports
-pub use error::*;
-pub use ico::*;
-pub use initialize_ico::*;
-pub use invest::*;
+pub use crate::ico::*;
+pub use crate::initialize_ico::*;
+pub use crate::invest::*;
 pub use claim::*;
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
@@ -53,8 +55,8 @@ pub mod ico_launchpad {
     }
 
     /// Create a shielded investment in an ICO using Light Protocol
-    pub fn create_investment<'info>(
-        ctx: Context<'_, '_, '_, 'info, Invest<'info>>,
+pub fn create_investment<'a, 'b, 'c, 'info>(
+    ctx: Context<'a, 'b, 'c, 'info, Invest<'info>>,
         proof: ValidityProof, 
         address_tree_info: PackedAddressTreeInfo, 
         output_merkle_tree_index: u8, 

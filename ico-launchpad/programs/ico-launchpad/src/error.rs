@@ -28,4 +28,6 @@ pub enum ErrorCode {
     NotEnoughTokens,
     #[msg("Overflow error")]
     OverflowError,
+    #[msg("Insufficient funds")]
+    InsufficientFunds,
 }
