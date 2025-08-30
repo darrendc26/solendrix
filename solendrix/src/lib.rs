@@ -1,4 +1,7 @@
-use pinocchio::{entrypoint, instruction, pubkey::Pubkey, program_error::ProgramError, account_info::AccountInfo, ProgramResult};
+#![allow(unexpected_cfgs)]
+use pinocchio::{entrypoint, pubkey::Pubkey, program_error::ProgramError, account_info::AccountInfo, ProgramResult};
+
+use crate::instructions::InitMarket;
 entrypoint!(process_instruction);
 
 pub mod state;
@@ -13,7 +16,9 @@ pub fn process_instruction(
 ) -> ProgramResult {
     assert_eq!(program_id, &ID);
     match instruction_data.split_first() {
-            Some(Deposit) => todo!(),
-            _ => Err(ProgramError::InvalidInstructionData),
+        Some((&InitMarket::DISCRIMINATOR, data)) => 
+            InitMarket::try_from((data, accounts))?.process(),
+        
+        _ => Err(ProgramError::InvalidInstructionData),
     }
 }

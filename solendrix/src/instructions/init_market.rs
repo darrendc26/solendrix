@@ -1,8 +1,8 @@
 use pinocchio::{account_info::AccountInfo, ProgramResult,
-            instruction::{Account, Instruction, Seed, Signer}, 
-            program_error::ProgramError, pubkey::{checked_create_program_address, 
-                find_program_address, Pubkey}};
-use crate::{state::market::Market, ID};
+            instruction::Seed, 
+            program_error::ProgramError, pubkey::{
+                find_program_address }};
+use crate::{state::market::Market};
 use crate::instructions::helpers::*;
 use crate::instructions::{ AccountCheck};
 
@@ -21,7 +21,7 @@ impl<'a> TryFrom< &'a [AccountInfo] > for InitMarketAccounts<'a> {
     type Error = ProgramError;
 
     fn try_from(accounts: &'a [AccountInfo]) -> Result<Self, Self::Error> {
-        let [admin, market,fee_vault, vault_a, vault_b, system_program, _] = accounts else {
+        let [admin, market,fee_vault, vault_a, vault_b, system_program] = accounts else {
             return Err(ProgramError::NotEnoughAccountKeys);
         };
 
@@ -46,7 +46,7 @@ pub struct InitMarketData {
 impl<'a> TryFrom< &'a [u8]> for InitMarketData {
     type Error = ProgramError;
 
-    fn try_from((data): &'a [u8]) -> Result<Self, Self::Error> {
+    fn try_from(data: &'a [u8]) -> Result<Self, Self::Error> {
         if data.len() != size_of::<InitMarketData>() {
             return Err(ProgramError::InvalidAccountData);
         }
@@ -88,7 +88,7 @@ impl<'a> TryFrom< (&'a [u8], &'a [AccountInfo])> for InitMarket<'a> {
             Seed::from(&bump_binding),
         ];
 
-        ProgramAccount::init::<Market>(
+       let _ = ProgramAccount::init::<Market>(
             accounts.admin,
             accounts.market,
             &market_seeds,
@@ -123,6 +123,6 @@ impl<'a> InitMarket<'a> {
     market.set_is_active(true);
     market.set_bump(bump);
 
-        Ok(())
+    Ok(())
     }
 }
