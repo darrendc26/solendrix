@@ -1,5 +1,7 @@
-use pinocchio::{entrypoint, instruction, pubkey::Pubkey, program_error::ProgramError, AccountInfo, ProgramResult};
+use pinocchio::{entrypoint, instruction, pubkey::Pubkey, program_error::ProgramError, account_info::AccountInfo, ProgramResult};
 entrypoint!(process_instruction);
+
+pub mod state;
 
 pinocchio_pubkey::declare_id!("Dr2Y39b8JDWbmvug8UPwQvorfsEkyog9r4AR3ZcK5cJU");
 
