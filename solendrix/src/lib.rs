@@ -2,6 +2,7 @@ use pinocchio::{entrypoint, instruction, pubkey::Pubkey, program_error::ProgramE
 entrypoint!(process_instruction);
 
 pub mod state;
+pub mod instructions;
 
 pinocchio_pubkey::declare_id!("Dr2Y39b8JDWbmvug8UPwQvorfsEkyog9r4AR3ZcK5cJU");
 
