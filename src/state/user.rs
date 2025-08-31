@@ -3,9 +3,9 @@ use core::mem::size_of;
 
 pub struct User {
     pub pubkey: Pubkey,
-    total_deposits: u64,
-    total_borrows: u64,
-    last_update_ts: i64,
+    pub total_deposits: u64,
+    pub total_borrows: u64,
+    pub last_update_ts: i64,
     bump: u8,
 }
 

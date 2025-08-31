@@ -7,6 +7,7 @@ use solana_sdk::{
 
 mod basic;
 use basic::*;
+
  #[test]
     fn test_init_market() {
         // 1. Setup VM and program

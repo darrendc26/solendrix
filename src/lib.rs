@@ -1,7 +1,7 @@
 #![allow(unexpected_cfgs)]
 use pinocchio::{entrypoint, pubkey::Pubkey, program_error::ProgramError, account_info::AccountInfo, ProgramResult};
 
-use crate::instructions::{InitMarket, InitUser};
+use crate::instructions::{InitMarket, InitUser, DepositCollateral};
 entrypoint!(process_instruction);
 
 pub mod state;
@@ -18,7 +18,10 @@ pub fn process_instruction(
     match instruction_data.split_first() {
         Some((&InitMarket::DISCRIMINATOR, data)) => 
             InitMarket::try_from((data, accounts))?.process(),
-        Some((&InitUser::DISCRIMINATOR, _)) => InitUser::try_from(accounts)?.process(),
+        Some((&InitUser::DISCRIMINATOR, _)) => 
+            InitUser::try_from(accounts)?.process(),
+        Some((&DepositCollateral::DISCRIMINATOR, data)) => 
+            DepositCollateral::try_from((data, accounts))?.process(),
         _ => Err(ProgramError::InvalidInstructionData),
     }
 }
