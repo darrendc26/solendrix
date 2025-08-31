@@ -35,7 +35,7 @@ use basic::*;
                 AccountMeta::new_readonly(system_program::id(), false), // system_program
             ],
             data: vec![
-                0, // maybe your program's "InitMarket" discriminator
+                0, 
                 10, 0, 0, 0, 0, 0, 0, 0, // liquidity threshold
                 5, 0, 0, 0, 0, 0, 0, 0,  // fee
             ],
