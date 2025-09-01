@@ -12,6 +12,8 @@ pinocchio-associated-token-account = "0.2.0"
 pinocchio-pubkey = "0.3.0"
 pinocchio-system = "0.3.0"
 pinocchio-token = "0.4.0"
+spl-associated-token-account = "7.0.0"
+spl-token = "8.0.0"
 
 [dev-dependencies]
 litesvm = "0.6.1"

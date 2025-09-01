@@ -1,5 +1,6 @@
 use pinocchio::sysvars::Sysvar;
-use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramResult};
+use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramResult, 
+    pubkey::{find_program_address}};
 use pinocchio_token::instructions::Transfer;
 use crate::instructions::helpers::*;
 use crate::state::{user::User, market::Market};
@@ -26,7 +27,7 @@ impl<'a> TryFrom<&'a [AccountInfo]> for DepositCollateralAccounts<'a> {
         SignerAccount::check(user)?;
         ProgramAccount::check(user_pda)?;
         ProgramAccount::check(market)?;
-        AssociatedTokenAccount::check(user_token_account, user, mint_a, token_program)?;
+        TokenAccountInterface::check(user_token_account)?;
         MintInterface::check(mint_a)?;
         TokenAccountInterface::check(vault_a)?;
 
@@ -66,6 +67,7 @@ impl<'a> TryFrom<&'a [u8]> for DepositCollateralData {
 pub struct DepositCollateral<'a> {
     pub accounts: DepositCollateralAccounts<'a>,
     pub data: DepositCollateralData,
+
 }
 
 impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for DepositCollateral<'a> {
@@ -74,6 +76,22 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for DepositCollateral<'a> {
     fn try_from((data, accounts): (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
         let accounts = DepositCollateralAccounts::try_from(accounts)?;
         let data = DepositCollateralData::try_from(data)?;
+
+        let (user_pda, _bump) = find_program_address(
+            &[b"user", accounts.user.key().as_ref()],
+            &crate::ID, // your program ID
+        );
+        if user_pda != *accounts.user_pda.key(){
+            return Err(ProgramError::InvalidSeeds);
+        }
+
+        let (market_pda, _bump) = find_program_address(
+            &[b"market", accounts.user.key().as_ref()],
+            &crate::ID, // your program ID
+        );
+        if market_pda != *accounts.market.key(){
+            return Err(ProgramError::InvalidSeeds);
+        }
 
         Ok(Self {
             accounts,
