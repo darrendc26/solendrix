@@ -1,3 +1,6 @@
+use crate::instructions::helpers::*;
+use crate::state::{market::Market, user::User};
+use pinocchio::sysvars::clock::Clock;
 use pinocchio::sysvars::Sysvar;
 use pinocchio::{
     account_info::AccountInfo,
@@ -6,30 +9,25 @@ use pinocchio::{
     pubkey::find_program_address,
     ProgramResult,
 };
-// use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramResult,
-//         pubkey::{find_program_address}};
-use crate::instructions::helpers::*;
-use crate::state::{market::Market, user::User};
-use pinocchio::sysvars::clock::Clock;
 use pinocchio_token::instructions::Transfer;
 
-pub struct BorrowAccounts<'a> {
+pub struct WithdrawCollateralAccounts<'a> {
     pub user: &'a AccountInfo,
     pub admin: &'a AccountInfo,
     pub user_pda: &'a AccountInfo,
     pub market: &'a AccountInfo,
-    pub user_token_account_b: &'a AccountInfo,
-    pub mint_b: &'a AccountInfo,
-    pub vault_b: &'a AccountInfo,
+    pub user_token_account_a: &'a AccountInfo,
+    pub mint_a: &'a AccountInfo,
+    pub vault_a: &'a AccountInfo,
     pub system_program: &'a AccountInfo,
     pub token_program: &'a AccountInfo,
 }
 
-impl<'a> TryFrom<&'a [AccountInfo]> for BorrowAccounts<'a> {
+impl<'a> TryFrom<&'a [AccountInfo]> for WithdrawCollateralAccounts<'a> {
     type Error = ProgramError;
 
     fn try_from(accounts: &'a [AccountInfo]) -> Result<Self, Self::Error> {
-        let [user, admin, user_pda, market, user_token_account_b, mint_b, vault_b, system_program, token_program] =
+        let [user, admin, user_pda, market, user_token_account_a, mint_a, vault_a, system_program, token_program] =
             accounts
         else {
             return Err(ProgramError::NotEnoughAccountKeys);
@@ -39,29 +37,29 @@ impl<'a> TryFrom<&'a [AccountInfo]> for BorrowAccounts<'a> {
         SignerAccount::check(admin)?;
         ProgramAccount::check(user_pda)?;
         ProgramAccount::check(market)?;
-        TokenAccountInterface::check(user_token_account_b)?;
-        MintInterface::check(mint_b)?;
-        TokenAccountInterface::check(vault_b)?;
+        TokenAccountInterface::check(user_token_account_a)?;
+        MintInterface::check(mint_a)?;
+        TokenAccountInterface::check(vault_a)?;
 
         Ok(Self {
             user: user,
             admin: admin,
             user_pda: user_pda,
             market: market,
-            user_token_account_b: user_token_account_b,
-            mint_b: mint_b,
-            vault_b: vault_b,
+            user_token_account_a: user_token_account_a,
+            mint_a: mint_a,
+            vault_a: vault_a,
             system_program: system_program,
             token_program: token_program,
         })
     }
 }
 
-pub struct BorrowData {
+pub struct WithdrawCollateralData {
     pub amount: u64,
 }
 
-impl<'a> TryFrom<&'a [u8]> for BorrowData {
+impl<'a> TryFrom<&'a [u8]> for WithdrawCollateralData {
     type Error = ProgramError;
     fn try_from(data: &'a [u8]) -> Result<Self, Self::Error> {
         if data.len() < size_of::<u8>() {
@@ -75,18 +73,18 @@ impl<'a> TryFrom<&'a [u8]> for BorrowData {
     }
 }
 
-pub struct Borrow<'a> {
-    pub accounts: BorrowAccounts<'a>,
-    pub data: BorrowData,
+pub struct WithdrawCollateral<'a> {
+    pub accounts: WithdrawCollateralAccounts<'a>,
+    pub data: WithdrawCollateralData,
     pub market_bump: u8,
 }
 
-impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Borrow<'a> {
+impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for WithdrawCollateral<'a> {
     type Error = ProgramError;
 
     fn try_from((data, accounts): (&'a [u8], &'a [AccountInfo])) -> Result<Self, Self::Error> {
-        let accounts = BorrowAccounts::try_from(accounts)?;
-        let data = BorrowData::try_from(data)?;
+        let accounts = WithdrawCollateralAccounts::try_from(accounts)?;
+        let data = WithdrawCollateralData::try_from(data)?;
 
         let (user_pda, _bump) = find_program_address(
             &[b"user", accounts.user.key().as_ref()],
@@ -112,8 +110,8 @@ impl<'a> TryFrom<(&'a [u8], &'a [AccountInfo])> for Borrow<'a> {
     }
 }
 
-impl<'a> Borrow<'a> {
-    pub const DISCRIMINATOR: u8 = 3;
+impl<'a> WithdrawCollateral<'a> {
+    pub const DISCRIMINATOR: u8 = 4;
 
     pub fn process(&self) -> ProgramResult {
         let mut user_data = self.accounts.user_pda.try_borrow_mut_data()?;
@@ -128,9 +126,6 @@ impl<'a> Borrow<'a> {
             return Err(ProgramError::InsufficientFunds);
         }
 
-        let fee = amount * market.fee / 10000;
-        let amount = amount - fee;
-
         let seed_binding = [self.market_bump];
         let market_seeds = [
             Seed::from(b"market"),
@@ -139,8 +134,8 @@ impl<'a> Borrow<'a> {
         ];
         let signer = [Signer::from(&market_seeds)];
         Transfer {
-            from: self.accounts.vault_b,
-            to: self.accounts.user_token_account_b,
+            from: self.accounts.vault_a,
+            to: self.accounts.user_token_account_a,
             authority: self.accounts.market,
             amount,
         }
@@ -156,5 +151,3 @@ impl<'a> Borrow<'a> {
         Ok(())
     }
 }
-
-// TODO: Have to send fees to fee vault

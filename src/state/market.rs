@@ -1,10 +1,10 @@
-use pinocchio::{pubkey::Pubkey, program_error::ProgramError};
 use core::mem::size_of;
+use pinocchio::{program_error::ProgramError, pubkey::Pubkey};
 
 pub struct Market {
     pub admin: Pubkey,
     pub total_deposits: u64,
-    pub total_withdrawals: u64,
+    pub total_borrows: u64,
     pub liquidity_threshold: u64,
     pub fee: u64,
     pub fee_vault: Pubkey,
@@ -15,14 +15,13 @@ pub struct Market {
 }
 
 impl Market {
-
     pub const LEN: usize = size_of::<Market>();
 
     pub fn load_mut(bytes: &mut [u8]) -> Result<&mut Self, ProgramError> {
         if bytes.len() != Market::LEN {
             return Err(ProgramError::InvalidAccountData);
         }
-        
+
         Ok(unsafe { &mut *core::mem::transmute::<*mut u8, *mut Self>(bytes.as_mut_ptr()) })
     }
 
@@ -30,7 +29,7 @@ impl Market {
         if bytes.len() != Market::LEN {
             return Err(ProgramError::InvalidAccountData);
         }
-        
+
         Ok(unsafe { &*core::mem::transmute::<*const u8, *const Self>(bytes.as_ptr()) })
     }
 
@@ -42,8 +41,8 @@ impl Market {
         self.total_deposits = total_deposits;
     }
 
-    pub fn set_total_withdrawals(&mut self, total_withdrawals: u64) {
-        self.total_withdrawals = total_withdrawals;
+    pub fn set_total_borrows(&mut self, total_borrows: u64) {
+        self.total_borrows = total_borrows;
     }
 
     pub fn set_liquidity_threshold(&mut self, liquidity_threshold: u64) {
@@ -73,5 +72,4 @@ impl Market {
     pub fn set_bump(&mut self, bump: u8) {
         self.bump = bump;
     }
-
 }
