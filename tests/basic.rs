@@ -14,13 +14,9 @@ use solana_sdk::{
 };
 use spl_token::{
         instruction as token_instruction,
-        state::{Account as TokenAccount, Mint},
         ID as TOKEN_PROGRAM_ID,
     };
-    use spl_associated_token_account::{
-        instruction as ata_instruction,
-        ID as ASSOCIATED_TOKEN_PROGRAM_ID,
-    };
+   
 use solendrix::ID;
 
 pub fn setup_svm_and_program() -> (LiteSVM, Keypair, Pubkey) {
@@ -142,7 +138,7 @@ pub fn build_and_send_transaction(
 //         (mint_pubkey, user_token_account)
 //     }
 
-
+    #[allow(dead_code)]
     pub fn create_vault_token_account(
         svm: &mut LiteSVM,
         payer: &Keypair,
@@ -182,123 +178,123 @@ pub fn build_and_send_transaction(
         vault_pubkey
     }
 
+    #[allow(dead_code)]
+    pub fn setup_mint_and_regular_token_account(
+        svm: &mut LiteSVM,
+        mint_authority: &Keypair,
+        owner: &Keypair,
+        initial_supply: u64,
+    ) -> (Pubkey, Pubkey) {
+        let mint = Keypair::new();
+        let mint_pubkey = mint.pubkey();
 
-pub fn setup_mint_and_regular_token_account(
-    svm: &mut LiteSVM,
-    mint_authority: &Keypair,
-    owner: &Keypair,
-    initial_supply: u64,
-) -> (Pubkey, Pubkey) {
-    let mint = Keypair::new();
-    let mint_pubkey = mint.pubkey();
+        const MINT_SIZE: usize = 82;
+        // Create mint account
+        let mint_rent = svm.minimum_balance_for_rent_exemption(MINT_SIZE);
+        
+        let create_mint_account_ix = solana_sdk::system_instruction::create_account(
+            &mint_authority.pubkey(),
+            &mint_pubkey,
+            mint_rent,
+            MINT_SIZE as u64,
+            &TOKEN_PROGRAM_ID,
+        );
 
-    const MINT_SIZE: usize = 82;
-    // Create mint account
-    let mint_rent = svm.minimum_balance_for_rent_exemption(MINT_SIZE);
-    
-    let create_mint_account_ix = solana_sdk::system_instruction::create_account(
-        &mint_authority.pubkey(),
-        &mint_pubkey,
-        mint_rent,
-        MINT_SIZE as u64,
-        &TOKEN_PROGRAM_ID,
-    );
-
-    let initialize_mint_ix = token_instruction::initialize_mint(
-        &TOKEN_PROGRAM_ID,
-        &mint_pubkey,
-        &mint_authority.pubkey(),
-        Some(&mint_authority.pubkey()),
-        6, // decimals
-    ).unwrap();
-
-    let tx = Transaction::new_signed_with_payer(
-        &[create_mint_account_ix, initialize_mint_ix],
-        Some(&mint_authority.pubkey()),
-        &[mint_authority, &mint],
-        svm.latest_blockhash(),
-    );
-
-    svm.send_transaction(tx).unwrap();
-
-    // Create regular token account (not ATA)
-    let user_token_account = create_vault_token_account(
-        svm,
-        mint_authority,
-        &mint_pubkey,
-        &owner.pubkey(),
-    );
-
-    // Mint tokens to user
-    if initial_supply > 0 {
-        let mint_to_ix = token_instruction::mint_to(
+        let initialize_mint_ix = token_instruction::initialize_mint(
             &TOKEN_PROGRAM_ID,
             &mint_pubkey,
-            &user_token_account,
             &mint_authority.pubkey(),
-            &[],
-            initial_supply,
+            Some(&mint_authority.pubkey()),
+            6, // decimals
         ).unwrap();
 
         let tx = Transaction::new_signed_with_payer(
-            &[mint_to_ix],
+            &[create_mint_account_ix, initialize_mint_ix],
             Some(&mint_authority.pubkey()),
-            &[mint_authority],
+            &[mint_authority, &mint],
             svm.latest_blockhash(),
         );
 
         svm.send_transaction(tx).unwrap();
+
+        // Create regular token account (not ATA)
+        let user_token_account = create_vault_token_account(
+            svm,
+            mint_authority,
+            &mint_pubkey,
+            &owner.pubkey(),
+        );
+
+        // Mint tokens to user
+        if initial_supply > 0 {
+            let mint_to_ix = token_instruction::mint_to(
+                &TOKEN_PROGRAM_ID,
+                &mint_pubkey,
+                &user_token_account,
+                &mint_authority.pubkey(),
+                &[],
+                initial_supply,
+            ).unwrap();
+
+            let tx = Transaction::new_signed_with_payer(
+                &[mint_to_ix],
+                Some(&mint_authority.pubkey()),
+                &[mint_authority],
+                svm.latest_blockhash(),
+            );
+
+            svm.send_transaction(tx).unwrap();
+        }
+
+        (mint_pubkey, user_token_account)
     }
 
-    (mint_pubkey, user_token_account)
-}
+    #[allow(dead_code)]
+    pub fn init_user(svm: &mut LiteSVM, user: &Keypair, program_id: Pubkey) {
+        let (user_pda, _bump) = Pubkey::find_program_address(
+            &[b"user", user.pubkey().as_ref()],
+            &program_id,
+        );
+        let ix = Instruction {
+                program_id,
+                accounts: vec![        
+                    AccountMeta::new(user.pubkey(), true),       // user (signer)
+                    AccountMeta::new(user_pda, false),          // user_pda  
+                    AccountMeta::new_readonly(system_program::id(), false), // system_program
+                ],
+                data: vec![
+                    1, 
+                ],
+                };
+        build_and_send_transaction(svm, user, vec![ix]).unwrap();
+    }
+    #[allow(dead_code)]
+    pub fn init_market(svm: &mut LiteSVM, admin: &Keypair, program_id: Pubkey, mint_pubkey: Pubkey) {
+        let (market_pda, _bump) = Pubkey::find_program_address(
+            &[b"market", admin.pubkey().as_ref()],
+            &program_id,
+        );
+        
+        let vault_a = create_vault_token_account(svm, admin, &mint_pubkey, &market_pda);
+        let vault_b = create_vault_token_account(svm, admin, &mint_pubkey, &market_pda);
+        let fee_vault = create_vault_token_account(svm, admin, &mint_pubkey, &market_pda);
 
-
-pub fn init_user(svm: &mut LiteSVM, user: &Keypair, program_id: Pubkey) {
-    let (user_pda, _bump) = Pubkey::find_program_address(
-        &[b"user", user.pubkey().as_ref()],
-        &program_id,
-    );
-    let ix = Instruction {
-            program_id,
-            accounts: vec![        
-                AccountMeta::new(user.pubkey(), true),       // user (signer)
-                AccountMeta::new(user_pda, false),          // user_pda  
-                AccountMeta::new_readonly(system_program::id(), false), // system_program
-            ],
-            data: vec![
-                1, 
-            ],
+        let ix = Instruction {
+                program_id,
+                accounts: vec![
+                    AccountMeta::new(admin.pubkey(), true),       // admin (signer)
+                    AccountMeta::new(market_pda, false),          // market account (PDA)
+                    AccountMeta::new_readonly(fee_vault, false),  // fee_vault
+                    AccountMeta::new_readonly(vault_a, false),    // vault_a  
+                    AccountMeta::new_readonly(vault_b, false),    // vault_b
+                    AccountMeta::new_readonly(system_program::id(), false), // system_program
+                ],
+                data: vec![
+                    0, 
+                    10, 0, 0, 0, 0, 0, 0, 0, // liquidity threshold
+                    5, 0, 0, 0, 0, 0, 0, 0,  // fee
+                ],
             };
-    build_and_send_transaction(svm, user, vec![ix]).unwrap();
-}
 
-pub fn init_market(svm: &mut LiteSVM, admin: &Keypair, program_id: Pubkey, mint_pubkey: Pubkey) {
-    let (market_pda, _bump) = Pubkey::find_program_address(
-        &[b"market", admin.pubkey().as_ref()],
-        &program_id,
-    );
-    
-    let vault_a = create_vault_token_account(svm, admin, &mint_pubkey, &market_pda);
-    let vault_b = create_vault_token_account(svm, admin, &mint_pubkey, &market_pda);
-    let fee_vault = create_vault_token_account(svm, admin, &mint_pubkey, &market_pda);
-
-    let ix = Instruction {
-            program_id,
-            accounts: vec![
-                AccountMeta::new(admin.pubkey(), true),       // admin (signer)
-                AccountMeta::new(market_pda, false),          // market account (PDA)
-                AccountMeta::new_readonly(fee_vault, false),  // fee_vault
-                AccountMeta::new_readonly(vault_a, false),    // vault_a  
-                AccountMeta::new_readonly(vault_b, false),    // vault_b
-                AccountMeta::new_readonly(system_program::id(), false), // system_program
-            ],
-            data: vec![
-                0, 
-                10, 0, 0, 0, 0, 0, 0, 0, // liquidity threshold
-                5, 0, 0, 0, 0, 0, 0, 0,  // fee
-            ],
-        };
-
-    build_and_send_transaction(svm, admin, vec![ix]).unwrap();
-}
+        build_and_send_transaction(svm, admin, vec![ix]).unwrap();
+    }

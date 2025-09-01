@@ -6,7 +6,7 @@ use solana_sdk::{
     system_program,
 };
 use spl_token;
-use spl_associated_token_account;
+// use spl_associated_token_account;
 use solendrix::state::User;
 mod basic;
 use basic::*;
@@ -45,7 +45,6 @@ fn test_deposit() {
         &[b"user", admin.pubkey().as_ref()],
         &program_id,
     );
-        svm.warp_to_slot(100);
 
     // TODO: You need to initialize the market_pda and user_pda accounts first
     // Add initialization instructions here before deposit
