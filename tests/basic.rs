@@ -55,91 +55,92 @@ pub fn build_and_send_transaction(
 }
 
 
-pub fn setup_mint_and_token_account(
-        svm: &mut LiteSVM,
-        mint_authority: &Keypair,
-        owner: &Keypair,
-        initial_supply: u64,
-    ) -> (Pubkey, Pubkey) {
-        let mint = Keypair::new();
-        let mint_pubkey = mint.pubkey();
+// pub fn setup_mint_and_token_account(
+//         svm: &mut LiteSVM,
+//         mint_authority: &Keypair,
+//         owner: &Keypair,
+//         initial_supply: u64,
+//     ) -> (Pubkey, Pubkey) {
+//         let mint = Keypair::new();
+//         let mint_pubkey = mint.pubkey();
 
 
-        const MINT_SIZE: usize = 82;
-        // Create mint account
-        let mint_rent = svm.minimum_balance_for_rent_exemption(MINT_SIZE);
-        // let mint_rent = rent.minimum_balance(Mint::LEN);
+//         const MINT_SIZE: usize = 82;
+//         // Create mint account
+//         let mint_rent = svm.minimum_balance_for_rent_exemption(MINT_SIZE);
+//         // let mint_rent = rent.minimum_balance(Mint::LEN);
         
-        let create_mint_account_ix = solana_sdk::system_instruction::create_account(
-            &mint_authority.pubkey(),
-            &mint_pubkey,
-            mint_rent,
-            MINT_SIZE as u64,
-            &TOKEN_PROGRAM_ID,
-        );
+//         let create_mint_account_ix = solana_sdk::system_instruction::create_account(
+//             &mint_authority.pubkey(),
+//             &mint_pubkey,
+//             mint_rent,
+//             MINT_SIZE as u64,
+//             &ASSOCIATED_TOKEN_PROGRAM_ID,
+//         );
 
-        let initialize_mint_ix = token_instruction::initialize_mint(
-            &TOKEN_PROGRAM_ID,
-            &mint_pubkey,
-            &mint_authority.pubkey(),
-            Some(&mint_authority.pubkey()),
-            6, // decimals
-        ).unwrap();
+//         let initialize_mint_ix = token_instruction::initialize_mint(
+//             &TOKEN_PROGRAM_ID    ,                // token_program
+//             &mint_pubkey,
+//             &mint_authority.pubkey(),
+//             Some(&mint_authority.pubkey()),
+//             6, // decimals
+//         ).unwrap();
 
-        let tx = Transaction::new_signed_with_payer(
-            &[create_mint_account_ix, initialize_mint_ix],
-            Some(&mint_authority.pubkey()),
-            &[mint_authority, &mint],
-            svm.latest_blockhash(),
-        );
+//         let tx = Transaction::new_signed_with_payer(
+//             &[create_mint_account_ix, initialize_mint_ix],
+//             Some(&mint_authority.pubkey()),
+//             &[mint_authority, &mint],
+//             svm.latest_blockhash(),
+//         );
 
-        svm.send_transaction(tx).unwrap();
+//         svm.send_transaction(tx).unwrap();
 
-        // Create associated token account
-        let user_token_account = spl_associated_token_account::get_associated_token_address(
-            &owner.pubkey(),
-            &mint_pubkey,
-        );
+//         // Create associated token account
+//         let user_token_account = spl_associated_token_account::get_associated_token_address(
+//             &owner.pubkey(),
+//             &mint_pubkey,
+//         );
 
-        let create_ata_ix = ata_instruction::create_associated_token_account(
-            &mint_authority.pubkey(),
-            &owner.pubkey(),
-            &mint_pubkey,
-            &ASSOCIATED_TOKEN_PROGRAM_ID,
-        );
+//         let create_ata_ix = ata_instruction::create_associated_token_account(
+//             &mint_authority.pubkey(),
+//             &owner.pubkey(),
+//             &mint_pubkey,
+//             &ASSOCIATED_TOKEN_PROGRAM_ID,
+//         );
 
-        let tx = Transaction::new_signed_with_payer(
-            &[create_ata_ix],
-            Some(&mint_authority.pubkey()),
-            &[mint_authority],
-            svm.latest_blockhash(),
-        );
+//         let tx = Transaction::new_signed_with_payer(
+//             &[create_ata_ix],
+//             Some(&mint_authority.pubkey()),
+//             &[mint_authority],
+//             svm.latest_blockhash(),
+//         );
 
-        svm.send_transaction(tx).unwrap();
+//         svm.send_transaction(tx).unwrap();
 
-        // Mint tokens to user
-        if initial_supply > 0 {
-            let mint_to_ix = token_instruction::mint_to(
-                &TOKEN_PROGRAM_ID,
-                &mint_pubkey,
-                &user_token_account,
-                &mint_authority.pubkey(),
-                &[],
-                initial_supply,
-            ).unwrap();
+//         // Mint tokens to user
+//         if initial_supply > 0 {
+//             let mint_to_ix = token_instruction::mint_to(
+//                 &
+//                 ASSOCIATED_TOKEN_PROGRAM_ID,
+//                 &mint_pubkey,
+//                 &user_token_account,
+//                 &mint_authority.pubkey(),
+//                 &[],
+//                 initial_supply,
+//             ).unwrap();
 
-            let tx = Transaction::new_signed_with_payer(
-                &[mint_to_ix],
-                Some(&mint_authority.pubkey()),
-                &[mint_authority],
-                svm.latest_blockhash(),
-            );
+//             let tx = Transaction::new_signed_with_payer(
+//                 &[mint_to_ix],
+//                 Some(&mint_authority.pubkey()),
+//                 &[mint_authority],
+//                 svm.latest_blockhash(),
+//             );
 
-            svm.send_transaction(tx).unwrap();
-        }
+//             svm.send_transaction(tx).unwrap();
+//         }
 
-        (mint_pubkey, user_token_account)
-    }
+//         (mint_pubkey, user_token_account)
+//     }
 
 
     pub fn create_vault_token_account(
@@ -272,14 +273,15 @@ pub fn init_user(svm: &mut LiteSVM, user: &Keypair, program_id: Pubkey) {
     build_and_send_transaction(svm, user, vec![ix]).unwrap();
 }
 
-pub fn init_market(svm: &mut LiteSVM, admin: &Keypair, program_id: Pubkey) {
+pub fn init_market(svm: &mut LiteSVM, admin: &Keypair, program_id: Pubkey, mint_pubkey: Pubkey) {
     let (market_pda, _bump) = Pubkey::find_program_address(
         &[b"market", admin.pubkey().as_ref()],
         &program_id,
     );
-    let fee_vault = Pubkey::new_unique();
-    let vault_a = Pubkey::new_unique();
-    let vault_b = Pubkey::new_unique();
+    
+    let vault_a = create_vault_token_account(svm, admin, &mint_pubkey, &market_pda);
+    let vault_b = create_vault_token_account(svm, admin, &mint_pubkey, &market_pda);
+    let fee_vault = create_vault_token_account(svm, admin, &mint_pubkey, &market_pda);
 
     let ix = Instruction {
             program_id,

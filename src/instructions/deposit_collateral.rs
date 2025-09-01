@@ -1,3 +1,4 @@
+use core::mem::size_of;
 use pinocchio::sysvars::Sysvar;
 use pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramResult, 
     pubkey::{find_program_address}};
@@ -27,6 +28,7 @@ impl<'a> TryFrom<&'a [AccountInfo]> for DepositCollateralAccounts<'a> {
         SignerAccount::check(user)?;
         ProgramAccount::check(user_pda)?;
         ProgramAccount::check(market)?;
+        // AssociatedTokenAccount::check(user_token_account, user, mint_a, token_program)?;
         TokenAccountInterface::check(user_token_account)?;
         MintInterface::check(mint_a)?;
         TokenAccountInterface::check(vault_a)?;
@@ -52,12 +54,12 @@ impl<'a> TryFrom<&'a [u8]> for DepositCollateralData {
     type Error = ProgramError;
 
     fn try_from(data: &'a [u8]) -> Result<Self, Self::Error> {
-        if data.len() != size_of::<DepositCollateralData>() {
+        if data.len() < size_of::<u8>() {
             return Err(ProgramError::InvalidAccountData);
         }
         let amount = u64::from_le_bytes(data[0..8].try_into().unwrap());
 
-        if !amount > 0 {
+        if amount == 0 {
             return Err(ProgramError::InvalidAccountData);
         }
         Ok(Self { amount })

@@ -17,8 +17,7 @@ fn test_deposit() {
     let (mut svm, admin, program_id) = setup_svm_and_program();
     
 
-    init_market(&mut svm, &admin, program_id);
-    init_user(&mut svm, &admin, program_id);
+   
 
     // Use regular token account instead of ATA
     let (mint_pubkey, user_token_account) = setup_mint_and_regular_token_account(
@@ -34,7 +33,8 @@ fn test_deposit() {
         &mint_pubkey,
         &admin.pubkey(),
     );
-
+ init_market(&mut svm, &admin, program_id, mint_pubkey);
+    init_user(&mut svm, &admin, program_id);
     // 2. Derive PDA for market account (same seeds your program uses)
     let (market_pda, _bump) = Pubkey::find_program_address(
         &[b"market", admin.pubkey().as_ref()],
@@ -71,6 +71,7 @@ fn test_deposit() {
     // 4. Send transaction
     let res = build_and_send_transaction(&mut svm, &admin, vec![ix]);
 
+    println!("res: {:?}", res);
     // 5. Assert success
     match res {
         Ok(metadata) => {
