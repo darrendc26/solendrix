@@ -7,7 +7,7 @@ use solana_sdk::{
 };
 use spl_token;
 use spl_associated_token_account;
-
+use solendrix::state::User;
 mod basic;
 use basic::*;
 
@@ -45,6 +45,7 @@ fn test_deposit() {
         &[b"user", admin.pubkey().as_ref()],
         &program_id,
     );
+        svm.warp_to_slot(100);
 
     // TODO: You need to initialize the market_pda and user_pda accounts first
     // Add initialization instructions here before deposit
@@ -71,8 +72,13 @@ fn test_deposit() {
     // 4. Send transaction
     let res = build_and_send_transaction(&mut svm, &admin, vec![ix]);
 
-    println!("res: {:?}", res);
-    // 5. Assert success
+    let account = svm.get_account(&user_pda).unwrap();
+    let mut data = account.data.clone();
+    let user = User::load_mut(&mut data).unwrap();
+
+    println!("total deposits: {}", user.total_deposits);
+    println!("last update ts: {}", user.last_update_ts);
+
     match res {
         Ok(metadata) => {
             println!("Transaction succeeded!");

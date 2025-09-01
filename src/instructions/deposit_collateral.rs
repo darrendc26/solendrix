@@ -112,13 +112,13 @@ impl<'a> DepositCollateral<'a> {
         let user = User::load_mut(&mut data)?;
         let now = Clock::get()?.unix_timestamp; 
 
-        let _ = Transfer {
+        Transfer {
             from: self.accounts.user_token_account,
             to: self.accounts.vault_a,
             authority: self.accounts.user,
             amount: self.data.amount,
         }
-        .invoke();
+        .invoke()?;
     
         user.set_total_deposits(user.total_deposits + self.data.amount);
         user.set_last_update_ts(now);
