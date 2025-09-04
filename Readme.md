@@ -28,7 +28,15 @@ It allows users to **deposit one token as collateral and borrow another token**,
 
 ---
 
-Prerequisites
+## Deployment
+This project is currently deployed on the Solana Devnet.  
+You can find the program ID [here](https://solscan.io/tx/4JkzivYLYq6SXW7jbVFbTeBuVmafvSTktw1hPDVseiTHhhcRLEriSbCu7WnWyaYQbkZiLnJaGeGe3aqsXWSVJsjy?cluster=devnet).
+
+Program Id: VXpsq1ccmhEUuGeARVCBxZLkMz2Py7c8R5qbHFoebQh
+
+Signature: 4JkzivYLYq6SXW7jbVFbTeBuVmafvSTktw1hPDVseiTHhhcRLEriSbCu7WnWyaYQbkZiLnJaGeGe3aqsXWSVJsjy
+
+## Prerequisites
 
 Rust + Cargo
 
@@ -41,7 +49,7 @@ Optional: LiteSVM for lightweight transaction simulation
 cargo build-bpf
 ```
 
-##Test
+## Test
 ```bash
 cargo test
 ```
