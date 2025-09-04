@@ -4,7 +4,7 @@ use pinocchio::{
     ProgramResult,
 };
 
-use crate::instructions::{Borrow, DepositCollateral, InitMarket, InitUser};
+use crate::instructions::{Borrow, DepositCollateral, InitMarket, InitUser, WithdrawCollateral};
 entrypoint!(process_instruction);
 
 pub mod instructions;
@@ -27,6 +27,9 @@ pub fn process_instruction(
             DepositCollateral::try_from((data, accounts))?.process()
         }
         Some((&Borrow::DISCRIMINATOR, data)) => Borrow::try_from((data, accounts))?.process(),
+        Some((&WithdrawCollateral::DISCRIMINATOR, data)) => {
+            WithdrawCollateral::try_from((data, accounts))?.process()
+        }
         _ => Err(ProgramError::InvalidInstructionData),
     }
 }

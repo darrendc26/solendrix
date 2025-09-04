@@ -1,6 +1,7 @@
-use pinocchio::{pubkey::Pubkey, program_error::ProgramError};
 use core::mem::size_of;
+use pinocchio::{program_error::ProgramError, pubkey::Pubkey};
 
+#[repr(C)]
 pub struct User {
     pub pubkey: Pubkey,
     pub total_deposits: u64,
@@ -18,13 +19,13 @@ impl User {
         }
 
         Ok(unsafe { &*core::mem::transmute::<*const u8, *const Self>(bytes.as_ptr()) })
-   }
+    }
 
     pub fn load_mut(bytes: &mut [u8]) -> Result<&mut Self, ProgramError> {
         if bytes.len() != Self::LEN {
             return Err(ProgramError::InvalidAccountData);
         }
-        
+
         Ok(unsafe { &mut *core::mem::transmute::<*mut u8, *mut Self>(bytes.as_mut_ptr()) })
     }
 

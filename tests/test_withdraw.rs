@@ -4,14 +4,13 @@ use solana_sdk::{
     signer::Signer,
     system_program,
 };
-use spl_token;
-// use spl_associated_token_account;
 use solendrix::state::User;
+use spl_token;
 mod basic;
 use basic::*;
 
 #[test]
-fn test_deposit() {
+fn test_withdraw() {
     let (mut svm, admin, user, program_id) = setup_svm_and_program();
 
     let (mint_pubkey, user_token_account) =
@@ -28,7 +27,7 @@ fn test_deposit() {
 
     let vault = create_vault_token_account(&mut svm, &admin, &mint_pubkey, &market_pda);
 
-    let ix = Instruction {
+    let dep_ix = Instruction {
         program_id,
         accounts: vec![
             AccountMeta::new(user.pubkey(), true),                  // user
@@ -47,14 +46,48 @@ fn test_deposit() {
         ],
     };
 
-    let res = build_and_send_transaction(&mut svm, &user, vec![ix]);
+    let dep_res = build_and_send_transaction(&mut svm, &user, vec![dep_ix]);
+
+    println!("Deposit result:");
+    match dep_res {
+        Ok(metadata) => {
+            println!("Transaction succeeded!");
+            println!("Logs: {:?}", metadata.logs);
+        }
+        Err(failed_metadata) => {
+            println!("Transaction failed: {:?}", failed_metadata.err);
+            println!("Logs: {:?}", failed_metadata.meta.logs);
+            panic!("Transaction should have succeeded");
+        }
+    }
 
     let account = svm.get_account(&user_pda).unwrap();
     let mut data = account.data.clone();
-    let user = User::load_mut(&mut data).unwrap();
+    let user_account = User::load_mut(&mut data).unwrap();
 
-    println!("total deposits: {}", user.total_deposits);
-    println!("last update ts: {}", user.last_update_ts);
+    println!("total deposits: {}", user_account.total_deposits);
+    println!("last update ts: {}", user_account.last_update_ts);
+
+    let withdraw_ix = Instruction {
+        program_id,
+        accounts: vec![
+            AccountMeta::new(user.pubkey(), true),                  // user
+            AccountMeta::new(admin.pubkey(), false),                // admin
+            AccountMeta::new(user_pda, false),                      // user_pda
+            AccountMeta::new(market_pda, false),                    // market
+            AccountMeta::new(user_token_account, false),            // user_token_account
+            AccountMeta::new_readonly(mint_pubkey, false),          // mint
+            AccountMeta::new(vault, false),                         // vault_a
+            AccountMeta::new_readonly(system_program::id(), false), // system_program
+            AccountMeta::new_readonly(spl_token::id(), false),      // token_program
+        ],
+        data: vec![
+            4, // discriminator
+            8, 0, 0, 0, 0, 0, 0, 0, // amount
+        ],
+    };
+
+    let res = build_and_send_transaction(&mut svm, &user, vec![withdraw_ix]);
 
     match res {
         Ok(metadata) => {
@@ -67,4 +100,11 @@ fn test_deposit() {
             panic!("Transaction should have succeeded");
         }
     }
+
+    let account = svm.get_account(&user_pda).unwrap();
+    let mut data = account.data.clone();
+    let user_account = User::load_mut(&mut data).unwrap();
+
+    println!("total deposits: {}", user_account.total_deposits);
+    println!("last update ts: {}", user_account.last_update_ts);
 }

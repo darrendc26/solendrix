@@ -120,7 +120,10 @@ impl<'a> Borrow<'a> {
         let mut market_data = self.accounts.market.try_borrow_mut_data()?;
         let user = User::load_mut(&mut user_data)?;
         let market = Market::load_mut(&mut market_data)?;
-        let now = Clock::get()?.unix_timestamp;
+        let now = {
+            let clock = Clock::get()?;
+            clock.unix_timestamp
+        };
 
         let amount = self.data.amount;
 
